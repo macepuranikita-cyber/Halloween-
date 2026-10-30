@@ -1,0 +1,1523 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Дом Хранителя Осени — Хэллоуин-Квест</title>
+<style>
+  :root {
+    --gold: #f59e0b;
+    --gold-bright: #fbbf24;
+    --orange-glow: rgba(249, 115, 22, 0.45);
+    --bg-dark: #07040a;
+    --chalk: #e2f1e8;
+    --lx: 50vw;
+    --ly: 50vh;
+  }
+  * {
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  html, body {
+    margin: 0; padding: 0; width: 100%; height: 100%;
+    overflow: hidden; background: var(--bg-dark);
+    font-family: 'Georgia', 'Palatino', serif; color: #eeddc5;
+  }
+
+  /* Верхняя панель */
+  #topBar {
+    position: fixed; top: 0; left: 0; right: 0;
+    height: clamp(48px, 6vh, 60px);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: env(safe-area-inset-top, 0) clamp(8px, 2vw, 20px) 0;
+    z-index: 100; pointer-events: none; gap: 8px;
+  }
+  #topBar > * { pointer-events: auto; }
+  .icon-btn {
+    background: rgba(20, 13, 30, 0.88); border: 1px solid #5a4225;
+    color: var(--gold-bright); border-radius: 12px;
+    padding: clamp(6px, 1vh, 8px) clamp(8px, 1.5vw, 14px);
+    font-size: clamp(13px, 1.6vw, 16px); cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.6);
+    display: flex; align-items: center; gap: 6px; backdrop-filter: blur(4px);
+    font-family: inherit; white-space: nowrap; flex-shrink: 0;
+  }
+  .icon-btn:active { transform: scale(0.96); }
+  #candyWidget {
+    background: rgba(28, 16, 12, 0.9); border: 1px solid #854d0e;
+    border-radius: 14px; padding: clamp(4px, 0.8vh, 6px) clamp(10px, 1.8vw, 16px);
+    font-size: clamp(13px, 1.8vw, 17px); color: #fde68a;
+    box-shadow: 0 0 15px rgba(245, 158, 11, 0.25); white-space: nowrap;
+  }
+
+  /* Нижняя строка слов Тыквы */
+  #bottomBar {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    height: clamp(40px, 5vh, 48px);
+    background: linear-gradient(180deg, rgba(16, 10, 24, 0.95), #060309);
+    border-top: 1px solid #3c264d; z-index: 95; display: flex;
+    align-items: center; justify-content: center;
+    padding: 0 clamp(10px, 3vw, 24px) env(safe-area-inset-bottom, 0);
+    font-size: clamp(12px, 1.6vw, 15px); color: #fed7aa;
+    text-shadow: 0 0 8px rgba(251, 146, 60, 0.4);
+    letter-spacing: 0.4px; text-align: center; overflow: hidden;
+  }
+  #bottomLogText {
+    white-space: nowrap; text-overflow: ellipsis; overflow: hidden; max-width: 100%;
+  }
+
+  /* Вьюпорт и комнаты */
+  #viewport {
+    position: absolute; inset: 0;
+    bottom: clamp(40px, 5vh, 48px);
+    overflow: hidden;
+  }
+  .room-view {
+    position: absolute; inset: 0; display: none; opacity: 0;
+    transition: opacity 0.5s ease;
+  }
+  .room-view.active { display: block; opacity: 1; }
+
+  /* Кирпичная стена и пол */
+  .brick-wall {
+    position: absolute; inset: 0;
+    background-color: #170d14;
+    background-image: 
+      linear-gradient(335deg, rgba(0,0,0,0.78) 23px, transparent 23px),
+      linear-gradient(155deg, rgba(0,0,0,0.78) 23px, transparent 23px),
+      linear-gradient(335deg, rgba(0,0,0,0.78) 23px, transparent 23px),
+      linear-gradient(155deg, rgba(0,0,0,0.78) 23px, transparent 23px);
+    background-size: 58px 58px;
+    background-position: 0px 2px, 4px 35px, 29px 31px, 33px 4px;
+    box-shadow: inset 0 0 160px rgba(0,0,0,0.96);
+  }
+  .wood-floor {
+    position: absolute; left: 0; right: 0; bottom: 0;
+    height: clamp(80px, 16vh, 140px);
+    background: repeating-linear-gradient(90deg, #1c1109, #1c1109 95px, #100804 95px, #100804 100px);
+    border-top: 5px solid #0a0503;
+    box-shadow: inset 0 25px 50px rgba(0,0,0,0.95);
+  }
+
+  /* Паутина и паук */
+  .spider-web {
+    position: absolute; width: clamp(80px, 12vw, 130px); height: clamp(80px, 12vw, 130px);
+    pointer-events: none; opacity: 0.4;
+  }
+  .web-tl { top: 0; left: 0; border-right: 1px dashed #9ca3af; border-bottom: 1px dashed #9ca3af; border-radius: 0 0 100% 0; }
+  .web-tr { top: 0; right: 0; border-left: 1px dashed #9ca3af; border-bottom: 1px dashed #9ca3af; border-radius: 0 0 0 100%; }
+  .hanging-spider {
+    position: absolute; top: 0; left: clamp(90px, 16vw, 160px); width: 2px; height: clamp(60px, 11vh, 105px);
+    background: rgba(255,255,255,0.25); transform-origin: top center;
+    animation: sway 3.2s ease-in-out infinite alternate;
+  }
+  .hanging-spider::after {
+    content: "🕷️"; position: absolute; bottom: -12px; left: -9px;
+    font-size: clamp(14px, 2vw, 18px); filter: drop-shadow(0 2px 4px #000);
+  }
+  @keyframes sway { 0%{ transform: rotate(-7deg); } 100%{ transform: rotate(7deg); } }
+
+  /* Привидение девочки */
+  #ghostGirl {
+    position: absolute; right: clamp(12%, 18vw, 22%); top: clamp(65px, 14vh, 120px);
+    width: clamp(75px, 10vw, 110px); height: clamp(120px, 18vh, 180px);
+    cursor: pointer; opacity: 0.7; transition: filter 0.3s;
+    animation: ghostFloat 4s ease-in-out infinite alternate; z-index: 15;
+  }
+  #ghostGirl:hover { filter: drop-shadow(0 0 16px rgba(165, 243, 252, 0.8)); }
+  @keyframes ghostFloat {
+    0% { transform: translateY(0px) scale(0.98); }
+    100% { transform: translateY(-12px) scale(1.02); }
+  }
+  .ghost-bubble {
+    position: absolute; top: -38px; left: 50%; transform: translateX(-50%);
+    background: rgba(15, 23, 42, 0.92); border: 1px solid #38bdf8;
+    color: #bae6fd; padding: 4px 10px; border-radius: 12px;
+    font-size: clamp(11px, 1.4vw, 13px); white-space: nowrap; opacity: 0;
+    transition: opacity 0.3s; pointer-events: none;
+  }
+  .ghost-bubble.show { opacity: 1; }
+
+  /* Тыква на пне */
+  #pumpkinAnchor {
+    position: absolute; left: 50%; bottom: clamp(55px, 10vh, 85px); transform: translateX(-50%);
+    width: clamp(140px, 22vw, 200px); height: clamp(150px, 24vh, 210px);
+    text-align: center; cursor: pointer; z-index: 25;
+  }
+  .stump {
+    position: absolute; bottom: 0; left: 12%; width: 76%; height: 28%;
+    background: linear-gradient(180deg, #3d2314, #1c0f08);
+    border-radius: 14px 14px 6px 6px; box-shadow: 0 10px 20px #000;
+  }
+  .pumpkin-body {
+    position: absolute; bottom: 22%; left: 8%; width: 84%; height: 68%;
+    background: radial-gradient(ellipse at 50% 40%, #ff8c1a, #c2410c 70%, #7c2d12);
+    border-radius: 50% 50% 44% 44%; box-shadow: 0 0 35px var(--orange-glow);
+  }
+  .pumpkin-stem {
+    position: absolute; top: -14px; left: 50%; transform: translateX(-50%) rotate(7deg);
+    width: clamp(12px, 1.8vw, 18px); height: clamp(18px, 2.8vh, 28px);
+    background: #3f6212; border-radius: 6px;
+  }
+  .jack-face {
+    position: absolute; inset: 0; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 6px;
+  }
+  .jack-eyes { display: flex; gap: clamp(22px, 4vw, 40px); margin-top: 10px; }
+  .jack-eye {
+    width: 0; height: 0;
+    border-left: clamp(8px, 1.4vw, 14px) solid transparent;
+    border-right: clamp(8px, 1.4vw, 14px) solid transparent;
+    border-bottom: clamp(13px, 2.2vw, 22px) solid #1a0802;
+    filter: drop-shadow(0 0 6px #fbbf24);
+  }
+  .jack-mouth {
+    width: clamp(55px, 9vw, 85px); height: clamp(16px, 2.6vh, 26px);
+    background: #1a0802;
+    clip-path: polygon(0 20%, 20% 60%, 40% 10%, 60% 70%, 80% 20%, 100% 60%, 85% 100%, 15% 100%);
+    filter: drop-shadow(0 0 6px #fbbf24);
+  }
+  .pumpkin-cloud {
+    position: absolute; top: -50px; left: 50%; transform: translateX(-50%);
+    background: rgba(18, 10, 24, 0.95); border: 1px solid #b45309;
+    padding: 6px 14px; border-radius: 14px; color: #fed7aa;
+    font-size: clamp(12px, 1.6vw, 15px); white-space: nowrap; pointer-events: none;
+    opacity: 0; transition: opacity 0.3s; z-index: 50; box-shadow: 0 4px 20px rgba(0,0,0,0.8);
+  }
+  .pumpkin-cloud.show { opacity: 1; }
+
+  /* Окно, молоток и сундук */
+  #breakWindowArea {
+    position: absolute; left: clamp(14px, 3.5vw, 35px); bottom: clamp(100px, 16vh, 135px);
+    width: clamp(95px, 14vw, 140px); height: clamp(125px, 19vh, 180px);
+    border: clamp(5px, 0.8vw, 8px) solid #27170e; background: #0c1929; border-radius: 8px;
+    box-shadow: 0 0 25px rgba(0,0,0,0.8); overflow: hidden;
+    transition: box-shadow 0.25s, border-color 0.25s; z-index: 20;
+  }
+  #breakWindowArea.ready-to-hit {
+    border-color: #f59e0b; box-shadow: 0 0 35px rgba(245, 158, 11, 0.75);
+  }
+  #glassCanvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+  #hammerItem {
+    position: absolute; left: clamp(118px, 18vw, 190px); bottom: clamp(110px, 17vh, 145px);
+    width: clamp(40px, 5vw, 50px); height: clamp(40px, 5vw, 50px);
+    cursor: grab; touch-action: none; font-size: clamp(30px, 4vw, 40px);
+    line-height: clamp(40px, 5vw, 50px); text-align: center;
+    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.8)); z-index: 60;
+  }
+  #hammerItem:active { cursor: grabbing; }
+
+  #keyItem {
+    position: absolute; left: clamp(45px, 8vw, 80px); bottom: clamp(120px, 18vh, 150px);
+    font-size: clamp(26px, 3.6vw, 34px); cursor: grab; touch-action: none;
+    z-index: 65; display: none; filter: drop-shadow(0 0 14px #fbbf24);
+    animation: keyBounce 1s infinite alternate;
+  }
+  @keyframes keyBounce { from{ transform: translateY(0); } to{ transform: translateY(-8px); } }
+
+  #chestArea {
+    position: absolute; left: clamp(14px, 3.5vw, 35px); bottom: clamp(25px, 4.5vh, 35px);
+    width: clamp(95px, 13vw, 130px); height: clamp(65px, 9vh, 85px);
+    perspective: 400px; cursor: pointer; z-index: 22;
+  }
+  .chest-lid {
+    position: absolute; top: 0; left: 0; width: 100%; height: 42%;
+    background: linear-gradient(180deg, #854d0e, #533008);
+    border: 2px solid #ca8a04; border-radius: 12px 12px 0 0;
+    transform-origin: top center; transition: transform 0.8s ease-out; z-index: 2;
+  }
+  .chest-box {
+    position: absolute; bottom: 0; left: 0; width: 100%; height: 65%;
+    background: linear-gradient(180deg, #533008, #2e1a05);
+    border: 2px solid #ca8a04; border-radius: 0 0 8px 8px;
+    display: flex; align-items: center; justify-content: center; gap: clamp(4px, 0.8vw, 8px);
+  }
+  .seal-stamp {
+    width: clamp(17px, 2.4vw, 24px); height: clamp(17px, 2.4vw, 24px);
+    border-radius: 50%; background: #991b1b; border: 1px solid #f87171;
+    box-shadow: 0 0 6px #dc2626; display: flex; align-items: center;
+    justify-content: center; font-size: clamp(9px, 1.2vw, 11px); color: #fff;
+  }
+  .seal-stamp.broken { opacity: 0.2; transform: scale(0.8); }
+  #chestArea.open .chest-lid { transform: rotateX(-115deg); }
+
+  /* Двери */
+  .dungeon-door {
+    position: absolute; bottom: clamp(75px, 12vh, 110px);
+    width: clamp(85px, 12vw, 120px); height: clamp(150px, 22vh, 210px);
+    perspective: 800px; cursor: pointer; text-decoration: none; z-index: 20;
+  }
+  .door-frame {
+    position: absolute; inset: 0; border: clamp(5px, 0.8vw, 8px) solid #27170d; border-bottom: none;
+    background: #110905; border-radius: 14px 14px 0 0; box-shadow: 0 0 20px #000;
+  }
+  .door-leaf {
+    position: absolute; inset: 0; background: linear-gradient(90deg, #452410, #2c1609);
+    border-radius: 8px 8px 0 0; transform-origin: left center;
+    transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 2px 0 10px rgba(0,0,0,0.7); display: flex; flex-direction: column;
+    justify-content: space-around; padding: 10px 6px;
+  }
+  .door-panel {
+    border: 1px solid rgba(251, 191, 36, 0.25); height: 35%; border-radius: 4px;
+    background: rgba(0,0,0,0.25);
+  }
+  .door-knob {
+    position: absolute; right: 8px; top: 55%; width: clamp(10px, 1.4vw, 14px); height: clamp(10px, 1.4vw, 14px);
+    border-radius: 50%; background: #ca8a04; box-shadow: 0 0 6px #facc15;
+  }
+  .door-sign {
+    position: absolute; top: -34px; left: 50%; transform: translateX(-50%);
+    background: #1e1124; border: 1px solid #78350f; color: #fef08a;
+    padding: 3px 8px; border-radius: 8px; font-size: clamp(11px, 1.3vw, 13px);
+    white-space: nowrap; box-shadow: 0 2px 8px rgba(0,0,0,0.7);
+  }
+  .dungeon-door.open .door-leaf { transform: rotateY(-82deg); }
+  #doorLeftRoom { left: clamp(15px, 8vw, 120px); }
+  #doorRightRoom { right: clamp(15px, 8vw, 120px); }
+  .door-return-right { right: clamp(15px, 5vw, 60px); }
+  .door-back { left: clamp(14px, 3.5vw, 40px); }
+
+  /* Карточки комнат контента */
+  .scroll-content {
+    max-width: 760px; margin: clamp(52px, 8vh, 68px) auto 30px;
+    padding: 0 clamp(14px, 3vw, 24px);
+    max-height: calc(100vh - clamp(110px, 16vh, 160px)); overflow-y: auto;
+  }
+  .room-header { text-align: center; margin-bottom: clamp(14px, 2.5vh, 22px); }
+  .room-header h1 { color: #fde68a; font-size: clamp(20px, 3vw, 26px); margin: 0 0 6px; }
+  .card-item {
+    background: rgba(26, 17, 34, 0.9); border: 1px solid #4a3455;
+    border-left: 4px solid var(--gold); border-radius: 12px;
+    padding: clamp(12px, 2vh, 16px) clamp(14px, 2.5vw, 20px);
+    margin-bottom: clamp(10px, 1.8vh, 16px); box-shadow: 0 4px 18px rgba(0,0,0,0.5);
+  }
+  .card-item h3 { margin: 0 0 6px; color: #fef08a; font-size: clamp(15px, 2vw, 18px); }
+  .card-item p { margin: 0; line-height: 1.55; color: #d6d3d1; font-size: clamp(13px, 1.6vw, 15px); }
+
+  /* Адаптивные медиа-запросы */
+  @media (max-width: 768px) and (orientation: portrait) {
+    #ghostGirl { right: 8%; top: 75px; transform: scale(0.85); }
+    #doorLeftRoom { left: 10px; bottom: 85px; }
+    #doorRightRoom { right: 10px; bottom: 85px; }
+    .door-sign { font-size: 10px; top: -28px; padding: 2px 6px; }
+    #pumpkinAnchor { bottom: 65px; }
+    #breakWindowArea { left: 15px; bottom: 110px; }
+    #hammerItem { left: 130px; bottom: 120px; }
+    #chestArea { left: 15px; bottom: 25px; }
+  }
+
+  @media (max-height: 520px) {
+    #topBar { height: 42px; }
+    #bottomBar { height: 34px; font-size: 11px; }
+    #ghostGirl { top: 46px; height: 100px; width: 65px; }
+    .dungeon-door { height: 125px; bottom: 45px; }
+    #breakWindowArea { height: 105px; bottom: 70px; }
+    #chestArea { height: 50px; bottom: 15px; }
+    #pumpkinAnchor { height: 120px; bottom: 40px; }
+    .scroll-content { margin-top: 45px; }
+  }
+
+  @media (max-width: 480px) {
+    #useCandlesBtn span.btn-label { display: none; }
+    .icon-btn { padding: 6px 10px; }
+  }
+
+  /* Анимация коридора */
+  #corridorWarp {
+    position: fixed; inset: 0; background: #000; z-index: 250;
+    opacity: 0; pointer-events: none; transition: opacity 0.45s ease;
+    display: flex; align-items: center; justify-content: center;
+  }
+  #corridorWarp.active { opacity: 1; pointer-events: auto; }
+  .wisp-orb {
+    width: 40px; height: 40px; border-radius: 50%;
+    background: radial-gradient(circle, #fff, #38bdf8 60%, transparent 80%);
+    box-shadow: 0 0 45px #38bdf8, 0 0 90px #0284c7;
+    animation: wispDrift 1.2s ease-in-out infinite alternate;
+  }
+  @keyframes wispDrift {
+    0% { transform: scale(0.8) translate(-100px, -20px); opacity: 0.2; }
+    50% { opacity: 1; transform: scale(1.3) translate(0px, 10px); }
+    100% { transform: scale(0.9) translate(100px, -20px); opacity: 0.2; }
+  }
+
+  /* Тьма и свеча-фонарик */
+  #darkCurtain {
+    position: fixed; inset: 0; z-index: 80;
+    pointer-events: none; opacity: 0; transition: opacity 0.8s ease;
+    /* CSS-переменные для координат и размера света */
+    background: radial-gradient(
+      circle var(--radius, 150px) at var(--lx, 50vw) var(--ly, 50vh),
+      transparent 0%,
+      rgba(30, 15, 0, 0.85) 40%,
+      black 80%
+    );
+  }
+  #darkCurtain.on { opacity: 1; }
+
+  #candleLight {
+    position: fixed; left: 0; top: 0; width: 60px; height: 90px;
+    z-index: 85; cursor: grab; touch-action: none; display: none;
+    filter: drop-shadow(0 0 18px rgba(245, 158, 11, 0.6));
+    pointer-events: none; 
+  }
+  #candleLight.on { display: block; }
+  #candleLight.dead .c-flame { display: none; }
+  .c-body {
+    position: absolute; bottom: 0; left: 20px; width: 20px; height: 50px;
+    background: #e2d9c8; border-radius: 4px; box-shadow: inset -3px 0 5px rgba(0,0,0,0.3);
+  }
+  .c-flame {
+    position: absolute; bottom: 50px; left: 24px; width: 12px; height: 22px;
+    background: radial-gradient(circle at 50% 80%, #fff, #f59e0b 60%, transparent 95%);
+    border-radius: 50% 50% 30% 30%; animation: candleFlicker 0.15s infinite alternate;
+  }
+  @keyframes candleFlicker {
+    0% { transform: scale(1) rotate(-2deg); }
+    100% { transform: scale(1.15) rotate(2deg); }
+  }
+
+  /* Диалоги и модалки */
+  .modal-shade {
+    position: fixed; inset: 0; z-index: 300; background: rgba(5, 2, 8, 0.88);
+    backdrop-filter: blur(5px); display: none; align-items: center; justify-content: center;
+    padding: 20px;
+  }
+  .modal-shade.open { display: flex; }
+  .parchment-box {
+    width: min(560px, 94vw); background: #191024; border: 2px solid #854d0e;
+    border-radius: 16px; padding: 22px; box-shadow: 0 0 40px rgba(0,0,0,0.9);
+    position: relative; max-height: 88vh; overflow-y: auto; color: #eeddc5;
+  }
+  .parchment-box h2 { color: #fde68a; margin-top: 0; font-size: 22px; }
+  .parchment-box label { display: block; margin: 12px 0 4px; color: #cbd5e1; font-size: 14px; }
+  .parchment-box input, .parchment-box textarea {
+    width: 100%; background: #0c0714; border: 1px solid #4a385a; color: #fff;
+    padding: 10px; border-radius: 8px; font-size: 15px; font-family: inherit;
+  }
+  .act-btn {
+    background: #451a03; border: 1px solid #b45309; color: #fde68a;
+    padding: 9px 16px; border-radius: 10px; font-size: 14px; cursor: pointer;
+    margin-top: 10px; margin-right: 6px; font-family: inherit;
+  }
+  .act-btn:active { transform: scale(0.97); }
+  .act-btn.secondary { background: #1e1528; border-color: #4b365f; color: #cbd5e1; }
+
+  /* Пин-код */
+  .pin-dots {
+    display: flex; gap: 12px; justify-content: center; margin: 18px 0;
+  }
+  .pin-dot {
+    width: 18px; height: 18px; border-radius: 50%; border: 2px solid #ca8a04;
+    background: transparent; transition: background 0.2s;
+  }
+  .pin-dot.filled { background: #ca8a04; box-shadow: 0 0 10px #facc15; }
+  .numpad {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; max-width: 240px; margin: 0 auto;
+  }
+  .num-btn {
+    height: 50px; background: #281938; border: 1px solid #5a3c75; color: #fde68a;
+    font-size: 20px; border-radius: 10px; cursor: pointer;
+  }
+  .shake-anim { animation: shake 0.35s ease-in-out; }
+  @keyframes shake {
+    0%,100%{ transform: translateX(0); }
+    20%,60%{ transform: translateX(-12px); }
+    40%,80%{ transform: translateX(12px); }
+  }
+
+  /* Свиток клада */
+  #scrollPrize {
+    text-align: center; padding: 20px; border: 3px double #ca8a04;
+    background: radial-gradient(circle, #2d1a08, #160c04); border-radius: 12px;
+  }
+</style>
+</head>
+<body>
+
+<div id="topBar">
+  <button id="adminLockBtn" class="icon-btn" title="Кабинет ведущего">🔒</button>
+  <div id="candyWidget">🍬 Конфеты: <b id="candyCount">0</b></div>
+  <button id="useCandlesBtn" class="icon-btn" title="Обменять 3 конфеты на свет">🕯️ <span class="btn-label">Новая лампа </span>(3 🍬)</button>
+</div>
+
+<!-- Порт просмотра комнат -->
+<div id="viewport">
+
+  <!-- ==================== 1. ПРИХОЖАЯ (ЦЕНТРАЛЬНЫЙ ЗАЛ) ==================== -->
+  <section class="room-view active" id="hallView">
+    <div class="brick-wall"></div>
+    <div class="wood-floor"></div>
+
+    <div class="spider-web web-tl"></div>
+    <div class="spider-web web-tr"></div>
+    <div class="hanging-spider"></div>
+
+    <!-- Дверь влево: Зал с сундуком и окном -->
+    <div class="dungeon-door" id="doorLeftRoom" data-target="chestRoomView">
+      <div class="door-frame"></div>
+      <div class="door-sign">← Зал с сундуком и окном</div>
+      <div class="door-leaf"><div class="door-panel"></div><div class="door-panel"></div><div class="door-knob"></div></div>
+    </div>
+
+    <!-- Тыква на деревянном пеньке строго в центре -->
+    <div id="pumpkinAnchor">
+      <div class="pumpkin-cloud" id="pumpkinCloud">Бу! Не бойся темноты...</div>
+      <div class="stump"></div>
+      <div class="pumpkin-body">
+        <div class="pumpkin-stem"></div>
+        <div class="jack-face">
+          <div class="jack-eyes"><div class="jack-eye"></div><div class="jack-eye"></div></div>
+          <div class="jack-mouth"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Кнопка подсказки под тыквой -->
+    <button id="getHintBtn" class="act-btn" style="position: absolute; left: 50%; bottom: clamp(10px, 2vh, 20px); transform: translateX(-50%); z-index: 30; padding: clamp(8px, 1.5vh, 12px) clamp(16px, 3vw, 24px); font-size: clamp(14px, 2vw, 16px); box-shadow: 0 0 15px rgba(245,158,11,0.4); white-space: nowrap;">Получить подсказку</button>
+
+    <!-- Дверь вправо: Зал тайн и подсказок -->
+    <div class="dungeon-door" id="doorRightRoom" data-target="mysteriesRoomView">
+      <div class="door-frame"></div>
+      <div class="door-sign">Зал тайн и историй →</div>
+      <div class="door-leaf"><div class="door-panel"></div><div class="door-panel"></div><div class="door-knob"></div></div>
+    </div>
+  </section>
+
+  <!-- ==================== 2. ЛЕВАЯ КОМНАТА (СУНДУК И ОКНО) ==================== -->
+  <section class="room-view" id="chestRoomView">
+    <div class="brick-wall"></div>
+    <div class="wood-floor"></div>
+
+    <!-- Дверь возврата в прихожую -->
+    <div class="dungeon-door door-return-right" data-target="hallView">
+      <div class="door-frame"></div>
+      <div class="door-sign">В прихожую →</div>
+      <div class="door-leaf"><div class="door-panel"></div><div class="door-panel"></div><div class="door-knob"></div></div>
+    </div>
+
+    <!-- Интерактивное окно со стеклом -->
+    <div id="breakWindowArea">
+      <canvas id="glassCanvas" width="140" height="180"></canvas>
+    </div>
+    <!-- Молоточек и выпадающий ключ -->
+    <div id="hammerItem" title="Возьми меня и разбей стекло!">🔨</div>
+    <div id="keyItem" title="Неси ключ к сундуку!">🗝️</div>
+
+    <!-- Сундук с тремя печатями -->
+    <div id="chestArea" title="Сундук с замками-печатями">
+      <div class="chest-lid"></div>
+      <div class="chest-box">
+        <div class="seal-stamp" id="seal1">1</div>
+        <div class="seal-stamp" id="seal2">2</div>
+        <div class="seal-stamp" id="seal3">3</div>
+      </div>
+    </div>
+
+    <!-- Кнопка вызова загадок -->
+    <button id="leftRoomRiddleBtn" class="act-btn" style="position: absolute; left: 50%; bottom: clamp(20px, 4vh, 35px); transform: translateX(-50%); z-index: 30; padding: clamp(10px, 2vh, 14px) clamp(20px, 4vw, 30px); font-size: clamp(15px, 2.2vw, 18px); box-shadow: 0 0 18px rgba(245,158,11,0.5); white-space: nowrap;">Разгадать загадку</button>
+  </section>
+
+  <!-- ==================== 3. ПРАВАЯ КОМНАТА (ТАЙНЫ И ПРИЗРАК) ==================== -->
+  <section class="room-view" id="mysteriesRoomView">
+    <div class="brick-wall"></div>
+    <div class="wood-floor"></div>
+
+    <!-- Дверь возврата в прихожую -->
+    <div class="dungeon-door door-back" data-target="hallView">
+      <div class="door-frame"></div>
+      <div class="door-sign">← В прихожую</div>
+      <div class="door-leaf"><div class="door-panel"></div><div class="door-panel"></div><div class="door-knob"></div></div>
+    </div>
+
+    <!-- Привидение девочки -->
+    <div id="ghostGirl" title="Коснись меня...">
+      <div class="ghost-bubble" id="ghostBubble">Ш-ш-ш... Хранитель слышит нас...</div>
+      <svg viewBox="0 0 100 160" width="100%" height="100%">
+        <path d="M50 15 C25 15, 20 45, 20 75 C20 115, 10 135, 15 155 C25 145, 35 155, 45 145 C55 155, 65 145, 75 155 C85 145, 95 155, 85 135 C80 115, 80 45, 50 15 Z" fill="rgba(207, 250, 254, 0.45)" filter="drop-shadow(0 0 10px #67e8f9)"/>
+        <ellipse cx="40" cy="55" rx="4" ry="7" fill="#082f49"/>
+        <ellipse cx="60" cy="55" rx="4" ry="7" fill="#082f49"/>
+      </svg>
+    </div>
+
+    <!-- Карточки с историями и фактами Хэллоуина (20 штук) -->
+    <div class="scroll-content" style="margin-left:auto; margin-right:20px; max-width:560px;">
+      <div class="room-header">
+        <h1>📜 Тайны и легенды</h1>
+        <p>20 удивительных фактов о Хэллоуине</p>
+      </div>
+      <div class="card-item"><h3>1. Самайн и истоки</h3><p>Древние кельты верили, что в ночь на 1 ноября грань между миром духов и живых истончается до предела. Праздник назывался Самайн.</p></div>
+      <div class="card-item"><h3>2. Маски и костры</h3><p>Люди надевали шкуры и страшные маски, чтобы призраки приняли их за своих и прошли мимо, не причинив вреда.</p></div>
+      <div class="card-item"><h3>3. Фонарь из репы</h3><p>Изначально знаменитые светильники вырезали не из тыквы, а из репы, картофеля или свеклы, следуя ирландской легенде о Джеке.</p></div>
+      <div class="card-item"><h3>4. Боязнь Хэллоуина</h3><p>У панического страха перед Хэллоуином есть официальное научное название — самайнофобия (Samhainophobia).</p></div>
+      <div class="card-item"><h3>5. Черные кошки</h3><p>Из-за старинных суеверий приюты во многих странах запрещают "усыновлять" черных кошек в октябре, оберегая их.</p></div>
+      <div class="card-item"><h3>6. Candy Corn</h3><p>Знаменитые трёхцветные конфеты придумали в 1880-х годах. Тогда они назывались «куриным кормом» из-за цвета зерен кукурузы.</p></div>
+      <div class="card-item"><h3>7. Кошелек или жизнь!</h3><p>Традиция выпрашивать сладости пошла из Средневековья: бедняки молились за души умерших в обмен на специальную выпечку.</p></div>
+      <div class="card-item"><h3>8. Пауки и призраки</h3><p>Говорят, если на Хэллоуин вы увидели паука, это душа умершего близкого человека пришла присмотреть за вами.</p></div>
+      <div class="card-item"><h3>9. Полнолуние — редкость</h3><p>Хэллоуин в полнолуние выпадает крайне редко. В следующий раз это произойдет только в 2039 году!</p></div>
+      <div class="card-item"><h3>10. Тыквы-рекордсмены</h3><p>Самая тяжёлая тыква в истории весила более 1200 килограммов, её вырастили в Италии.</p></div>
+      <div class="card-item"><h3>11. Родина Хэллоуина</h3><p>Хотя праздник популярен в США, его истинная родина — Ирландия, откуда он перебрался вместе с эмигрантами.</p></div>
+      <div class="card-item"><h3>12. Гадания на яблоках</h3><p>В старину на Хэллоуин гадали на любовь: кто первым выловит яблоко из таза зубами, тот первым сыграет свадьбу.</p></div>
+      <div class="card-item"><h3>13. Летучие мыши</h3><p>Костры, которые зажигали друиды, привлекали мошкару. Мошкара привлекала летучих мышей. Так они стали символом праздника.</p></div>
+      <div class="card-item"><h3>14. Оранжевый и Черный</h3><p>Оранжевый символизирует сбор осеннего урожая и тепло костра, а черный — тьму длинных зимних ночей и смерть.</p></div>
+      <div class="card-item"><h3>15. Сахарная лихорадка</h3><p>В США на конфеты к Хэллоуину тратят около 3 миллиардов долларов каждый год!</p></div>
+      <div class="card-item"><h3>16. День всех святых</h3><p>Слово "Halloween" — это сокращение от шотландского "All-Hallows-Even", то есть вечер перед Днем всех святых.</p></div>
+      <div class="card-item"><h3>17. Второй по размаху</h3><p>Хэллоуин является вторым по коммерческому успеху праздником в мире, уступая только Рождеству.</p></div>
+      <div class="card-item"><h3>18. Совы и ведьмы</h3><p>В средние века считалось, что совы — это ведьмы в птичьем обличье, а их уханье предвещает беду.</p></div>
+      <div class="card-item"><h3>19. Запрет в Голливуде</h3><p>В Голливуде штрафуют на $1000 за использование аэрозольной паутины (silly string) на бульваре в ночь Хэллоуина.</p></div>
+      <div class="card-item"><h3>20. Блуждающие огни</h3><p>Мистические огоньки на болотах (огни святого Эльма или болотный газ) породили множество мифов о духах Хэллоуина.</p></div>
+    </div>
+  </section>
+
+</div>
+
+<!-- Строка лога Тыквы -->
+<div id="bottomBar">
+  <span id="bottomLogText">🎃 Тыква наблюдает за твоими шагами...</span>
+</div>
+
+<!-- Темнота и свеча -->
+<div id="darkCurtain"></div>
+<div id="candleLight">
+  <div class="c-flame"></div>
+  <div class="c-body"></div>
+</div>
+
+<!-- Экран перехода между комнатами -->
+<div id="corridorWarp"><div class="wisp-orb"></div></div>
+
+<!-- ==================== МОДАЛКА: ЗАГАДКА ==================== -->
+<div class="modal-shade" id="riddleModal">
+  <div class="parchment-box">
+    <h2 id="riddleTitle">Загадка Хэллоуина</h2>
+    <p id="riddleText" style="font-size:18px; line-height:1.5; color:#fde68a;"></p>
+    <label>Твой ответ:</label>
+    <input type="text" id="riddleAnswerInput" placeholder="Напиши слово...">
+    <div>
+      <button class="act-btn" id="riddleSubmitBtn">Ответить</button>
+      <button class="act-btn secondary" id="riddleCancelBtn">Позже</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== МОДАЛКА: СВИТОК СУНДУКА ==================== -->
+<div class="modal-shade" id="chestRewardModal">
+  <div class="parchment-box" style="text-align:center;">
+    <div id="scrollPrize">
+      <h2>🎉 СУНДУК РАСПАХНУТ!</h2>
+      <p id="chestRewardText" style="font-size:18px; color:#fde68a; margin:15px 0;"></p>
+      <p id="chestJokeText" style="font-style:italic; color:#93c5fd;"></p>
+      <div style="font-size:24px; margin-top:10px;">+5 🍬 получено!</div>
+      <button class="act-btn" id="closePrizeBtn">Принять награду</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== ВХОД В КАБИНЕТ (ПИН-КОД) ==================== -->
+<div class="modal-shade" id="pinModal">
+  <div class="parchment-box" style="max-width:320px; text-align:center;">
+    <h2>🔒 Пароль ведущего</h2>
+    <div class="pin-dots">
+      <div class="pin-dot" id="dot0"></div>
+      <div class="pin-dot" id="dot1"></div>
+      <div class="pin-dot" id="dot2"></div>
+    </div>
+    <div class="numpad">
+      <button class="num-btn" data-n="1">1</button>
+      <button class="num-btn" data-n="2">2</button>
+      <button class="num-btn" data-n="3">3</button>
+      <button class="num-btn" data-n="4">4</button>
+      <button class="num-btn" data-n="5">5</button>
+      <button class="num-btn" data-n="6">6</button>
+      <button class="num-btn" data-n="7">7</button>
+      <button class="num-btn" data-n="8">8</button>
+      <button class="num-btn" data-n="9">9</button>
+      <button class="num-btn" data-n="C">C</button>
+      <button class="num-btn" data-n="0">0</button>
+      <button class="num-btn" data-n="X">✕</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== КАБИНЕТ ВЕДУЩЕГО ==================== -->
+<div class="modal-shade" id="adminModal">
+  <div class="parchment-box">
+    <h2>🗝️ Кабинет ведущего</h2>
+
+    <label>🔊 Громкость звуков и атмосферы (0 - 100)</label>
+    <input type="range" id="volumeSlider" min="0" max="100" value="70">
+
+    <hr style="border-color:#533816; margin:18px 0;">
+
+    <h3>🕯️ Управление Светом и Тьмой</h3>
+    <label style="display:flex; align-items:center; gap:8px;">
+      <input type="checkbox" id="autoCycleToggle" style="width:18px; height:18px; cursor:pointer;">
+      <b style="color:#fde68a;">Автоматическая смена света и тьмы</b>
+    </label>
+    
+    <div style="display:flex; gap:10px; margin-top:12px;">
+      <div style="flex:1;">
+        <label>Свет горит (сек):</label>
+        <input type="number" id="autoLightSec" value="45">
+      </div>
+      <div style="flex:1;">
+        <label>Темнота длится (сек):</label>
+        <input type="number" id="autoDarkSec" value="60">
+      </div>
+    </div>
+    
+    <button class="act-btn" id="saveAutoLightBtn" style="width:100%;">Сохранить таймеры и запустить</button>
+    <div id="autoLightStatus" style="font-size:13px; color:#a7f3d0; margin-top:8px; text-align:center;">Авто-режим выключен.</div>
+
+    <div style="display:flex; gap:10px; margin-top:16px;">
+      <button class="act-btn" id="forceLightOn" style="flex:1;">Зажечь сейчас</button>
+      <button class="act-btn secondary" id="forceLightOff" style="flex:1;">Погасить сейчас</button>
+    </div>
+
+    <hr style="border-color:#533816; margin:18px 0;">
+
+    <h3>📝 Подсказки (выдаются по кнопке под тыквой)</h3>
+    <label>Текст подсказки:</label>
+    <textarea id="hintTextInput" rows="2" placeholder="Ищите на полках старинную книгу..."></textarea>
+    <label>Доступна через (секунд от старта игры):</label>
+    <input type="number" id="hintSecInput" value="60">
+    <button class="act-btn" id="addHintBtn">Добавить подсказку</button>
+    <div id="adminHintsList" style="margin-top:12px; max-height:150px; overflow-y:auto; border:1px solid #4a385a; padding:5px; border-radius:8px;"></div>
+
+    <hr style="border-color:#533816; margin:18px 0;">
+
+    <h3>🦇 Управление загадками</h3>
+    <label>Вопрос загадки:</label>
+    <textarea id="newRiddleQ" rows="2" placeholder="В бинтах, но не болен..."></textarea>
+    <label>Правильный ответ:</label>
+    <input type="text" id="newRiddleA" placeholder="Мумия">
+    <button class="act-btn" id="addRiddleBtn">Добавить загадку</button>
+    <div id="adminRiddlesList" style="margin-top:12px; max-height:150px; overflow-y:auto; border:1px solid #4a385a; padding:5px; border-radius:8px;"></div>
+
+    <hr style="border-color:#533816; margin:18px 0;">
+
+    <h3>🎁 Награда в сундуке</h3>
+    <label>Текст подарка в свитке сундука:</label>
+    <textarea id="prizeCustomText" rows="2"></textarea>
+    <button class="act-btn" id="savePrizeTextBtn">Сохранить текст клада</button>
+
+    <div style="margin-top:18px;">
+      <button class="act-btn secondary" id="resetProgressBtn">⚠️ Полный сброс прогресса</button>
+      <button class="act-btn" id="closeAdminBtn" style="float:right;">Закрыть</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ==========================================================================
+   СОСТОЯНИЕ И ХРАНИЛИЩЕ (localStorage)
+   ========================================================================== */
+var defaultState = {
+  candies: 0,
+  windowHits: 0,
+  windowBroken: false,
+  keyFound: false,
+  chestOpened: false,
+  sealsBroken: [false, false, false],
+  volume: 70,
+  isDark: false,
+  autoLightCycle: { enabled: false, lightDuration: 45, darkDuration: 60 },
+  gameStartTime: Date.now(),
+  prizeText: "Главный приз спрятан у Хранителя! Подойдите к ведущему и назовите кодовое слово: ТЫКВА.",
+  hints: [
+    { text: "Первая подсказка: вглядись в окно в левой комнате... Стекло старое и хрупкое.", delaySec: 10 },
+    { text: "Вторая подсказка: за каждой печатью на сундуке скрыта древняя загадка.", delaySec: 60 }
+  ],
+  riddles: [
+    { q: "Круглая, оранжевая, с зубами и огнём внутри. Кто это?", a: "тыква" },
+    { q: "Летает на метле, варит зелье в котле. Кто это?", a: "ведьма" },
+    { q: "Белое, летает сквозь стены и кричит 'Бу!' Кто это?", a: "привидение" },
+    { q: "Чёрный, усатый, ночной спутник колдуньи. Кто это?", a: "кот" },
+    { q: "Горит, тает, в темноте дорогу освещает. Что это?", a: "свеча" },
+    { q: "В гробу спит, чеснока боится, в летучую мышь превращается?", a: "вампир" },
+    { q: "Воет на луну, шерстью обрастает. Кто это?", a: "оборотень" },
+    { q: "В бинтах, но не болен, из гробницы вышел. Кто это?", a: "мумия" },
+    { q: "Костяной человек, гремит костями в шкафу. Кто это?", a: "скелет" },
+    { q: "Плетёт паутину в углу старого замка. Кто это?", a: "паук" },
+    { q: "Летает ночью, спит вниз головой. Кто это?", a: "летучая мышь" },
+    { q: "Что говорят дети, когда стучат в дверь на Хэллоуин?", a: "кошелек или жизнь" },
+    { q: "Где живут призраки и духи?", a: "заброшенный дом" },
+    { q: "Транспорт для старой карги с бородавкой.", a: "метла" },
+    { q: "Сладкое угощение, которое собирают в мешок.", a: "конфета" }
+  ],
+  jokes: [
+    "Почему скелеты не устраивают дуэли? У них просто нет духа!",
+    "Что едят привидения на Хэллоуин? Привидениевые оладушки с бу-у-у-реньем!",
+    "Почему мумия не звонит по телефону? Боится запутаться в сети!",
+    "Какое любимое блюдо вампира? Хот-дог с группой крови два положительная!"
+  ]
+};
+
+var S = (function() {
+  try {
+    var raw = localStorage.getItem('autumn_keeper_quest');
+    var parsed = raw ? JSON.parse(raw) : null;
+    var state = Object.assign({}, defaultState, parsed);
+    // Глубокое копирование для вложенного объекта таймеров
+    if (!state.autoLightCycle) state.autoLightCycle = Object.assign({}, defaultState.autoLightCycle);
+    return state;
+  } catch(e) {
+    return defaultState;
+  }
+})();
+
+function persist() {
+  if (!S.gameStartTime) S.gameStartTime = Date.now();
+  try { localStorage.setItem('autumn_keeper_quest', JSON.stringify(S)); } catch(e){}
+  updateUI();
+}
+// Инициализация времени при первой загрузке
+if (!S.gameStartTime) { S.gameStartTime = Date.now(); persist(); }
+
+/* ==========================================================================
+   АУДИО СИНТЕЗАТОР (Web Audio API)
+   ========================================================================== */
+var AC = null, masterGain = null, ambientGain = null;
+
+function initAudioEngine() {
+  if (AC) return;
+  try {
+    AC = new (window.AudioContext || window.webkitAudioContext)();
+    masterGain = AC.createGain();
+    masterGain.gain.value = S.volume / 100;
+    masterGain.connect(AC.destination);
+
+    // Фоновый осенний ветер
+    var len = AC.sampleRate * 2;
+    var buf = AC.createBuffer(1, len, AC.sampleRate);
+    var d = buf.getChannelData(0);
+    for (var i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * 0.4;
+
+    var noise = AC.createBufferSource();
+    noise.buffer = buf;
+    noise.loop = true;
+
+    var filter = AC.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.value = 260;
+
+    ambientGain = AC.createGain();
+    ambientGain.gain.value = 0.08;
+
+    noise.connect(filter);
+    filter.connect(ambientGain);
+    ambientGain.connect(masterGain);
+    noise.start();
+  } catch(e) {}
+}
+
+document.addEventListener('pointerdown', function firstTap() {
+  initAudioEngine();
+  if (AC && AC.state === 'suspended') AC.resume();
+  document.removeEventListener('pointerdown', firstTap);
+});
+
+function playTone(freq, duration, type, volume, dropFreq) {
+  if (!AC) return;
+  try {
+    var osc = AC.createOscillator();
+    var gain = AC.createGain();
+    var t = AC.currentTime;
+    osc.type = type || 'sine';
+    osc.frequency.setValueAtTime(freq, t);
+    if (dropFreq) osc.frequency.exponentialRampToValueAtTime(Math.max(20, dropFreq), t + duration);
+    gain.gain.setValueAtTime(volume || 0.2, t);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t + duration);
+    osc.connect(gain);
+    gain.connect(masterGain);
+    osc.start(t);
+    osc.stop(t + duration + 0.05);
+  } catch(e) {}
+}
+
+var SoundFx = {
+  doorCreak: function() { playTone(120, 0.7, 'sawtooth', 0.15, 40); },
+  glassClink: function() { playTone(1400, 0.15, 'triangle', 0.35, 800); },
+  glassBreak: function() {
+    playTone(900, 0.4, 'sawtooth', 0.3, 100);
+    playTone(1800, 0.2, 'square', 0.2, 300);
+  },
+  chestOpen: function() {
+    [329, 392, 493, 587, 659].forEach(function(f, idx) {
+      setTimeout(function(){ playTone(f, 0.35, 'triangle', 0.2); }, idx * 120);
+    });
+  },
+  ding: function() { playTone(880, 0.2, 'sine', 0.25); },
+  thud: function() { playTone(80, 0.3, 'sine', 0.4, 30); }
+};
+
+/* ==========================================================================
+   СИНТЕЗ РЕЧИ (WEB SPEECH API)
+   ========================================================================== */
+function speakRussian(text) {
+  if (!('speechSynthesis' in window)) return;
+  try {
+    window.speechSynthesis.cancel();
+    var utt = new SpeechSynthesisUtterance(text);
+    utt.lang = 'ru-RU';
+    utt.pitch = 0.65; // Низкий мрачный тон
+    utt.rate = 0.85;  // Замедленный темп
+
+    var voices = window.speechSynthesis.getVoices();
+    var ruVoice = voices.find(function(v) { return v.lang.indexOf('ru') !== -1; });
+    if (ruVoice) utt.voice = ruVoice;
+
+    window.speechSynthesis.speak(utt);
+  } catch(e) {}
+}
+
+/* ==========================================================================
+   ПЕРЕХОДЫ МЕЖДУ КОМНАТАМИ
+   ========================================================================== */
+function navigateToRoom(targetId) {
+  var corridor = document.getElementById('corridorWarp');
+  corridor.classList.add('active');
+  SoundFx.doorCreak();
+
+  setTimeout(function() {
+    document.querySelectorAll('.room-view').forEach(function(r) { r.classList.remove('active'); });
+    var target = document.getElementById(targetId);
+    if (target) target.classList.add('active');
+
+    setTimeout(function() {
+      corridor.classList.remove('active');
+      document.querySelectorAll('.dungeon-door').forEach(function(d){ d.classList.remove('open'); });
+    }, 450);
+  }, 650);
+}
+
+document.querySelectorAll('.dungeon-door').forEach(function(door) {
+  door.addEventListener('click', function(e) {
+    e.preventDefault();
+    door.classList.add('open');
+    var target = door.dataset.target;
+    setTimeout(function() { navigateToRoom(target); }, 300);
+  });
+});
+
+/* ==========================================================================
+   ТЕМНОТА И СВЕЧА
+   ========================================================================== */
+var candle = document.getElementById('candleLight');
+var darkCurtain = document.getElementById('darkCurtain');
+var candleX = window.innerWidth * 0.5, candleY = window.innerHeight * 0.5;
+var candleDead = false;
+var lastCandlePos = { x: candleX, y: candleY }, lastCandleTime = performance.now();
+
+// Переменные для автоматического цикла света/тьмы
+var cycleTimer = null;
+var cycleInterval = null;
+var cycleTargetTime = 0;
+
+function runAutoCycle() {
+  clearTimeout(cycleTimer);
+  clearInterval(cycleInterval);
+  var statusEl = document.getElementById('autoLightStatus');
+
+  if (!S.autoLightCycle.enabled) {
+    if(statusEl) statusEl.textContent = "Авто-режим выключен.";
+    return;
+  }
+
+  var duration = S.isDark ? S.autoLightCycle.darkDuration : S.autoLightCycle.lightDuration;
+  cycleTargetTime = Date.now() + duration * 1000;
+
+  // Обновление статуса в кабинете ведущего
+  cycleInterval = setInterval(function() {
+    var rem = Math.max(0, Math.ceil((cycleTargetTime - Date.now()) / 1000));
+    if(statusEl) {
+      statusEl.textContent = S.isDark ? "Свет включится через: " + rem + " сек" : "Свет погаснет через: " + rem + " сек";
+    }
+  }, 500);
+
+  // Переключение состояния по таймеру
+  cycleTimer = setTimeout(function() {
+    setDarkness(!S.isDark);
+  }, duration * 1000);
+}
+
+function setDarkness(isDark) {
+  S.isDark = isDark;
+  if (isDark) {
+    darkCurtain.classList.add('on');
+    candle.classList.add('on');
+    showPumpkinLine("В темноте делать нечего! Водите фонариком, разгадайте загадку или обменяйте конфеты.");
+  } else {
+    darkCurtain.classList.remove('on');
+    candle.classList.remove('on');
+    candleDead = false;
+    candle.classList.remove('dead');
+  }
+  persist();
+  runAutoCycle(); // Перезапускаем таймер при любой смене фазы (в т.ч. ручной)
+}
+
+function moveCandle(x, y) {
+  candleX = x;
+  candleY = y;
+  document.documentElement.style.setProperty('--lx', candleX + 'px');
+  document.documentElement.style.setProperty('--ly', candleY + 'px');
+  candle.style.transform = 'translate(' + (candleX - 30) + 'px, ' + (candleY - 45) + 'px)';
+}
+
+// Добавляем органичное мерцание (изменяем радиус света)
+setInterval(function() {
+  if (!S.isDark) return;
+  
+  if (candleDead) {
+    document.documentElement.style.setProperty('--radius', '0px');
+  } else {
+    // Базовый размер 130px + случайная пульсация до 30px
+    var flickerSize = 130 + Math.random() * 30; 
+    document.documentElement.style.setProperty('--radius', flickerSize + 'px');
+  }
+}, 80);
+
+// Сбрасываем позицию свечи при начале нового касания
+window.addEventListener('pointerdown', function(e) {
+  if (S.isDark && !candleDead) {
+    lastCandlePos = { x: e.clientX, y: e.clientY };
+    lastCandleTime = performance.now();
+    moveCandle(e.clientX, e.clientY);
+  }
+});
+
+// Фонарик двигается за движением мыши/пальца по всему экрану
+window.addEventListener('pointermove', function(e) {
+  if (S.isDark && !candleDead) {
+    var now = performance.now();
+    var dt = Math.max(16, now - lastCandleTime);
+    var dx = e.clientX - lastCandlePos.x;
+    var dy = e.clientY - lastCandlePos.y;
+    var speed = (Math.sqrt(dx * dx + dy * dy) / dt) * 1000;
+
+    lastCandlePos = { x: e.clientX, y: e.clientY };
+    lastCandleTime = now;
+
+    moveCandle(e.clientX, e.clientY);
+
+    // Резкий рывок гасит свечу
+    if (speed > 3000 && !candleDead) {
+      extinguishCandle();
+    }
+  }
+});
+
+function extinguishCandle() {
+  candleDead = true;
+  candle.classList.add('dead');
+  SoundFx.thud();
+  showPumpkinLine("Лампа потухла от резкого рывка! Отгадай загадку или отдай 3 конфеты.");
+  openRiddleModal("Лампа потухла!", function success() {
+    candleDead = false;
+    candle.classList.remove('dead');
+    SoundFx.ding();
+    S.candies += 1;
+    persist();
+    showPumpkinLine("Свеча вновь горит! +1 конфета в копилку.");
+  });
+}
+
+document.getElementById('useCandlesBtn').addEventListener('click', function() {
+  if (S.candies >= 3) {
+    S.candies -= 3;
+    candleDead = false;
+    candle.classList.remove('dead');
+    SoundFx.ding();
+    persist();
+    showPumpkinLine("Вы обменяли 3 конфеты на новый огонь!");
+  } else {
+    showPumpkinLine("Нужно 3 конфеты, чтобы зажечь свечу без загадки!");
+  }
+});
+
+/* ==========================================================================
+   ОКНО, МОЛОТОК И СУНДУК
+   ========================================================================== */
+var hammer = document.getElementById('hammerItem');
+var glassCanvas = document.getElementById('glassCanvas');
+var ctxGlass = glassCanvas.getContext('2d');
+var windowArea = document.getElementById('breakWindowArea');
+var keyItem = document.getElementById('keyItem');
+var chestArea = document.getElementById('chestArea');
+
+var hammerDragging = false;
+var hammerHome = { left: 190, bottom: 140 };
+
+hammer.addEventListener('pointerdown', function(e) {
+  if (S.windowBroken) return;
+  hammerDragging = true;
+  hammer.setPointerCapture(e.pointerId);
+});
+
+window.addEventListener('pointermove', function(e) {
+  if (hammerDragging) {
+    hammer.style.left = (e.clientX - 25) + 'px';
+    hammer.style.top = (e.clientY - 25) + 'px';
+    hammer.style.bottom = 'auto';
+
+    var wRect = windowArea.getBoundingClientRect();
+    if (e.clientX >= wRect.left && e.clientX <= wRect.right &&
+        e.clientY >= wRect.top && e.clientY <= wRect.bottom) {
+      windowArea.classList.add('ready-to-hit');
+    } else {
+      windowArea.classList.remove('ready-to-hit');
+    }
+  }
+});
+
+hammer.addEventListener('pointerup', function(e) {
+  if (!hammerDragging) return;
+  hammerDragging = false;
+
+  var wRect = windowArea.getBoundingClientRect();
+  if (e.clientX >= wRect.left && e.clientX <= wRect.right &&
+      e.clientY >= wRect.top && e.clientY <= wRect.bottom) {
+    hitWindow(e.clientX - wRect.left, e.clientY - wRect.top);
+  }
+
+  hammer.style.left = hammerHome.left + 'px';
+  hammer.style.bottom = hammerHome.bottom + 'px';
+  hammer.style.top = 'auto';
+  windowArea.classList.remove('ready-to-hit');
+});
+
+function drawCrack(startX, startY) {
+  ctxGlass.strokeStyle = "rgba(255, 255, 255, 0.75)";
+  ctxGlass.lineWidth = 1.5;
+  ctxGlass.beginPath();
+  ctxGlass.moveTo(startX, startY);
+  var curX = startX, curY = startY;
+  for (var i = 0; i < 4; i++) {
+    curX += (Math.random() - 0.5) * 40;
+    curY += (Math.random() - 0.5) * 40;
+    ctxGlass.lineTo(curX, curY);
+  }
+  ctxGlass.stroke();
+}
+
+function hitWindow(x, y) {
+  S.windowHits++;
+  SoundFx.glassClink();
+  drawCrack(x, y);
+
+  windowArea.style.transform = 'translate(' + ((Math.random()-0.5)*8) + 'px,' + ((Math.random()-0.5)*8) + 'px)';
+  setTimeout(function(){ windowArea.style.transform = 'none'; }, 100);
+
+  if (S.windowHits >= 6 && !S.windowBroken) {
+    S.windowBroken = true;
+    SoundFx.glassBreak();
+    ctxGlass.clearRect(0, 0, glassCanvas.width, glassCanvas.height);
+    windowArea.style.background = 'radial-gradient(circle, #3b82f6, #000)';
+    hammer.style.display = 'none';
+    keyItem.style.display = 'block';
+    showPumpkinLine("Стекло разбилось вдребезги! Возьми упавший ключ.");
+  }
+  persist();
+}
+
+// Ключ к сундуку
+var keyDragging = false;
+keyItem.addEventListener('pointerdown', function(e) {
+  if (S.chestOpened) return;
+  keyDragging = true;
+  keyItem.setPointerCapture(e.pointerId);
+});
+
+window.addEventListener('pointermove', function(e) {
+  if (keyDragging) {
+    keyItem.style.left = (e.clientX - 15) + 'px';
+    keyItem.style.top = (e.clientY - 15) + 'px';
+    keyItem.style.bottom = 'auto';
+  }
+});
+
+keyItem.addEventListener('pointerup', function(e) {
+  if (!keyDragging) return;
+  keyDragging = false;
+  var cRect = chestArea.getBoundingClientRect();
+  if (e.clientX >= cRect.left && e.clientX <= cRect.right &&
+      e.clientY >= cRect.top && e.clientY <= cRect.bottom) {
+    tryBreakSeal();
+  }
+  keyItem.style.left = '80px';
+  keyItem.style.bottom = '150px';
+  keyItem.style.top = 'auto';
+});
+
+function tryBreakSeal() {
+  var nextIdx = S.sealsBroken.indexOf(false);
+  if (nextIdx !== -1) {
+    openRiddleModal("Печать сундука №" + (nextIdx + 1), function success() {
+      S.sealsBroken[nextIdx] = true;
+      S.candies += 1;
+      persist();
+      SoundFx.ding();
+      if (S.sealsBroken.indexOf(false) === -1) {
+        unlockChest();
+      } else {
+        showPumpkinLine("Печать сломана! Разгадай остальные, чтобы открыть сундук.");
+      }
+    });
+  }
+}
+
+function unlockChest() {
+  S.chestOpened = true;
+  S.candies += 5;
+  chestArea.classList.add('open');
+  keyItem.style.display = 'none';
+  SoundFx.chestOpen();
+  persist();
+
+  setTimeout(function() {
+    var randomJoke = S.jokes[Math.floor(Math.random() * S.jokes.length)];
+    document.getElementById('chestRewardText').textContent = S.prizeText;
+    document.getElementById('chestJokeText').textContent = "Шутка Хранителя: «" + randomJoke + "»";
+    document.getElementById('chestRewardModal').classList.add('open');
+    showPumpkinLine("Сундук открыт! Клад найден!");
+  }, 800);
+}
+
+document.getElementById('closePrizeBtn').addEventListener('click', function() {
+  document.getElementById('chestRewardModal').classList.remove('open');
+});
+
+/* ==========================================================================
+   КНОПКА ЗАГАДКИ (ЛЕВАЯ КОМНАТА)
+   ========================================================================== */
+document.getElementById('leftRoomRiddleBtn').addEventListener('click', function() {
+  SoundFx.doorCreak();
+  openRiddleModal("Загадка Хранителя", function success() {
+    S.candies += 1;
+    persist();
+    SoundFx.ding();
+    showPumpkinLine("Ответ верный! +1 конфета в копилку.");
+  });
+});
+
+/* ==========================================================================
+   ЗАГАДКИ
+   ========================================================================== */
+var activeRiddleCallback = null;
+var curRiddle = null;
+
+function openRiddleModal(title, onSuccess) {
+  activeRiddleCallback = onSuccess;
+  curRiddle = S.riddles[Math.floor(Math.random() * S.riddles.length)];
+  document.getElementById('riddleTitle').textContent = title;
+  document.getElementById('riddleText').textContent = curRiddle.q;
+  document.getElementById('riddleAnswerInput').value = '';
+  document.getElementById('riddleModal').classList.add('open');
+}
+
+document.getElementById('riddleSubmitBtn').addEventListener('click', function() {
+  var userAns = document.getElementById('riddleAnswerInput').value.trim().toLowerCase();
+  if (userAns && curRiddle && userAns.indexOf(curRiddle.a.toLowerCase()) !== -1) {
+    document.getElementById('riddleModal').classList.remove('open');
+    if (activeRiddleCallback) activeRiddleCallback();
+  } else {
+    SoundFx.thud();
+    var inp = document.getElementById('riddleAnswerInput');
+    inp.classList.add('shake-anim');
+    setTimeout(function(){ inp.classList.remove('shake-anim'); }, 400);
+  }
+});
+
+document.getElementById('riddleCancelBtn').addEventListener('click', function() {
+  document.getElementById('riddleModal').classList.remove('open');
+});
+
+/* ==========================================================================
+   ПРИВИДЕНИЕ И ТЫКВА (ПОДСКАЗКИ)
+   ========================================================================== */
+var ghost = document.getElementById('ghostGirl');
+var ghostBubble = document.getElementById('ghostBubble');
+ghost.addEventListener('click', function() {
+  ghostBubble.classList.add('show');
+  setTimeout(function() { ghostBubble.classList.remove('show'); }, 2500);
+});
+
+var pumpkinAnchor = document.getElementById('pumpkinAnchor');
+var pumpkinCloud = document.getElementById('pumpkinCloud');
+pumpkinAnchor.addEventListener('click', function() {
+  var phrases = [
+    "Хранитель наблюдает за каждым уголком дома...",
+    "Ищи молоток, стекло скрывает секрет!",
+    "Не забывай разгадывать печати сундука!",
+    "Береги огонь свечи от сквозняков!"
+  ];
+  showPumpkinLine(phrases[Math.floor(Math.random() * phrases.length)]);
+  SoundFx.ding();
+});
+
+document.getElementById('getHintBtn').addEventListener('click', function() {
+  var elapsedSec = Math.floor((Date.now() - S.gameStartTime) / 1000);
+  var availableHints = S.hints.filter(function(h) { return h.delaySec <= elapsedSec; });
+  
+  if (availableHints.length > 0) {
+    // Берем последнюю доступную подсказку
+    var hint = availableHints[availableHints.length - 1];
+    showPumpkinLine(hint.text);
+    SoundFx.ding();
+  } else {
+    showPumpkinLine("Время для подсказок ещё не пришло... Осмотрись внимательнее.");
+    SoundFx.thud();
+  }
+});
+
+function showPumpkinLine(text) {
+  pumpkinCloud.textContent = text;
+  pumpkinCloud.classList.add('show');
+  document.getElementById('bottomLogText').textContent = "🎃 " + text;
+  speakRussian(text);
+  setTimeout(function() { pumpkinCloud.classList.remove('show'); }, 3500);
+}
+
+/* ==========================================================================
+   КАБИНЕТ ВЕДУЩЕГО (ПИН 111)
+   ========================================================================== */
+var enteredPin = "";
+var pinModal = document.getElementById('pinModal');
+var adminModal = document.getElementById('adminModal');
+
+document.getElementById('adminLockBtn').addEventListener('click', function() {
+  enteredPin = "";
+  updatePinDots();
+  pinModal.classList.add('open');
+});
+
+document.querySelectorAll('.num-btn').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    var val = btn.dataset.n;
+    if (val === 'C') {
+      enteredPin = "";
+    } else if (val === 'X') {
+      pinModal.classList.remove('open');
+      return;
+    } else {
+      if (enteredPin.length < 3) enteredPin += val;
+    }
+    updatePinDots();
+
+    if (enteredPin.length === 3) {
+      if (enteredPin === "111") {
+        pinModal.classList.remove('open');
+        openAdminCabinet();
+      } else {
+        SoundFx.thud();
+        var box = pinModal.querySelector('.parchment-box');
+        box.classList.add('shake-anim');
+        setTimeout(function() {
+          box.classList.remove('shake-anim');
+          enteredPin = "";
+          updatePinDots();
+        }, 400);
+      }
+    }
+  });
+});
+
+function updatePinDots() {
+  for (var i = 0; i < 3; i++) {
+    var dot = document.getElementById('dot' + i);
+    if (i < enteredPin.length) dot.classList.add('filled');
+    else dot.classList.remove('filled');
+  }
+}
+
+function openAdminCabinet() {
+  adminModal.classList.add('open');
+  document.getElementById('volumeSlider').value = S.volume;
+  document.getElementById('prizeCustomText').value = S.prizeText;
+  
+  // Синхронизация полей авто-цикла
+  document.getElementById('autoCycleToggle').checked = S.autoLightCycle.enabled;
+  document.getElementById('autoLightSec').value = S.autoLightCycle.lightDuration;
+  document.getElementById('autoDarkSec').value = S.autoLightCycle.darkDuration;
+  
+  renderAdminHints();
+  renderAdminRiddles();
+  runAutoCycle(); // Обновляем текст статуса таймера, если кабинет открыт
+}
+
+document.getElementById('closeAdminBtn').addEventListener('click', function() {
+  adminModal.classList.remove('open');
+});
+
+document.getElementById('volumeSlider').addEventListener('input', function(e) {
+  S.volume = parseInt(e.target.value, 10);
+  if (masterGain) masterGain.gain.value = S.volume / 100;
+  persist();
+});
+
+// Управление Авто-циклом
+document.getElementById('autoCycleToggle').addEventListener('change', function(e) {
+  S.autoLightCycle.enabled = e.target.checked;
+  persist();
+  runAutoCycle();
+});
+
+document.getElementById('saveAutoLightBtn').addEventListener('click', function() {
+  S.autoLightCycle.lightDuration = parseInt(document.getElementById('autoLightSec').value, 10) || 45;
+  S.autoLightCycle.darkDuration = parseInt(document.getElementById('autoDarkSec').value, 10) || 60;
+  // Если не включен, можно принудительно включить при сохранении настроек для удобства
+  if(!S.autoLightCycle.enabled) {
+    S.autoLightCycle.enabled = true;
+    document.getElementById('autoCycleToggle').checked = true;
+  }
+  persist();
+  runAutoCycle();
+  showPumpkinLine("Таймеры автоматического цикла сохранены!");
+});
+
+document.getElementById('forceLightOn').addEventListener('click', function() {
+  setDarkness(false);
+});
+
+document.getElementById('forceLightOff').addEventListener('click', function() {
+  setDarkness(true);
+});
+
+document.getElementById('addHintBtn').addEventListener('click', function() {
+  var text = document.getElementById('hintTextInput').value.trim();
+  var sec = parseInt(document.getElementById('hintSecInput').value, 10) || 0;
+  if (!text) return;
+  if (S.hints.length >= 30) {
+    alert("Достигнут лимит в 30 подсказок.");
+    return;
+  }
+  S.hints.push({
+    text: text,
+    delaySec: sec
+  });
+  document.getElementById('hintTextInput').value = '';
+  persist();
+  renderAdminHints();
+});
+
+function renderAdminHints() {
+  var list = document.getElementById('adminHintsList');
+  list.innerHTML = '';
+  // Сортировка по времени для удобства отображения
+  var sortedHints = S.hints.slice().sort(function(a,b){ return a.delaySec - b.delaySec; });
+  sortedHints.forEach(function(h) {
+    var originalIdx = S.hints.indexOf(h);
+    var div = document.createElement('div');
+    div.style.background = '#0d0714';
+    div.style.padding = '8px';
+    div.style.margin = '6px 0';
+    div.style.borderRadius = '6px';
+    div.style.border = '1px solid #3b2a4a';
+    div.innerHTML = '<b>Подсказка (через ' + h.delaySec + ' сек):</b> ' + h.text +
+      '<button class="act-btn secondary" style="padding:4px 8px; font-size:12px; float:right; margin:0;" data-delhint="' + originalIdx + '">Удалить</button>';
+    list.appendChild(div);
+  });
+}
+
+document.getElementById('adminHintsList').addEventListener('click', function(e) {
+  if (e.target.dataset.delhint !== undefined) {
+    S.hints.splice(parseInt(e.target.dataset.delhint, 10), 1);
+    persist();
+    renderAdminHints();
+  }
+});
+
+/* --- Управление загадками --- */
+document.getElementById('addRiddleBtn').addEventListener('click', function() {
+  var q = document.getElementById('newRiddleQ').value.trim();
+  var a = document.getElementById('newRiddleA').value.trim();
+  if (!q || !a) return;
+  S.riddles.push({ q: q, a: a });
+  document.getElementById('newRiddleQ').value = '';
+  document.getElementById('newRiddleA').value = '';
+  persist();
+  renderAdminRiddles();
+});
+
+function renderAdminRiddles() {
+  var list = document.getElementById('adminRiddlesList');
+  list.innerHTML = '';
+  S.riddles.forEach(function(r, idx) {
+    var div = document.createElement('div');
+    div.style.background = '#0d0714';
+    div.style.padding = '8px';
+    div.style.margin = '6px 0';
+    div.style.borderRadius = '6px';
+    div.style.border = '1px solid #3b2a4a';
+    div.innerHTML = '<b>В:</b> ' + r.q + '<br><small style="color:#a7f3d0">О: ' + r.a + '</small> ' +
+      '<button class="act-btn secondary" style="padding:4px 8px; font-size:12px; float:right; margin:-10px 0 0 0;" data-delrid="' + idx + '">Удалить</button>';
+    list.appendChild(div);
+  });
+}
+
+document.getElementById('adminRiddlesList').addEventListener('click', function(e) {
+  if (e.target.dataset.delrid !== undefined) {
+    S.riddles.splice(parseInt(e.target.dataset.delrid, 10), 1);
+    persist();
+    renderAdminRiddles();
+  }
+});
+
+document.getElementById('savePrizeTextBtn').addEventListener('click', function() {
+  S.prizeText = document.getElementById('prizeCustomText').value.trim();
+  persist();
+  showPumpkinLine("Текст клада обновлен!");
+});
+
+document.getElementById('resetProgressBtn').addEventListener('click', function() {
+  if (confirm("Точно сбросить весь игровой процесс?")) {
+    S = JSON.parse(JSON.stringify(defaultState));
+    persist();
+    ctxGlass.clearRect(0, 0, glassCanvas.width, glassCanvas.height);
+    location.reload();
+  }
+});
+
+/* ==========================================================================
+   ОБНОВЛЕНИЕ ИНТЕРФЕЙСА
+   ========================================================================== */
+function updateUI() {
+  document.getElementById('candyCount').textContent = S.candies;
+
+  if (S.windowBroken) {
+    hammer.style.display = 'none';
+    if (!S.chestOpened) keyItem.style.display = 'block';
+  } else {
+    hammer.style.display = 'block';
+    keyItem.style.display = 'none';
+  }
+
+  for (var i = 0; i < 3; i++) {
+    var sealEl = document.getElementById('seal' + (i + 1));
+    if (S.sealsBroken[i]) sealEl.classList.add('broken');
+    else sealEl.classList.remove('broken');
+  }
+
+  if (S.chestOpened) {
+    chestArea.classList.add('open');
+    keyItem.style.display = 'none';
+  }
+
+  if (S.isDark) {
+    darkCurtain.classList.add('on');
+    candle.classList.add('on');
+  } else {
+    darkCurtain.classList.remove('on');
+    candle.classList.remove('on');
+  }
+}
+
+// Запускаем цикл света/тьмы при инициализации скрипта
+runAutoCycle();
+updateUI();
+</script>
+</body>
+</html>
